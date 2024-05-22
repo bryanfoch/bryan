@@ -1,39 +1,57 @@
-React Native Appointment Scheduler
+# React Native Appointment Scheduler
 
 Este é um aplicativo de agendamento de compromissos desenvolvido com React Native. Ele permite que os usuários selecionem uma data a partir de um calendário e adicionem compromissos com hora e descrição.
 
-Funcionalidades
-Seleção de data utilizando um calendário interativo.
-Formulário para inserção de hora e descrição do compromisso.
-Navegação entre telas utilizando React Navigation.
-Instalação
+## Funcionalidades
+
+- Seleção de data utilizando um calendário interativo.
+- Formulário para inserção de hora e descrição do compromisso.
+- Navegação entre telas utilizando React Navigation.
+
+## Instalação
+
 Para instalar e executar este aplicativo, siga as instruções abaixo:
 
-Clone o repositório:
+1. **Clone o repositório:**
 
-bash:
-Copy code
-git clone https://github.com/bryanfoch/projeto-react-native-
-cd seu-repositorio
+    ```bash
+    git clone [https://github.com/seu-usuario/seu-repositorio.git](https://github.com/bryanfoch/projeto-react-native-)
+    cd seu-repositorio
+    ```
 
-Instale as dependências:
-bash
-Copy code
-npm install
+2. **Instale as dependências:**
 
-Execute o aplicativo:
-bash
-Copy code
-npx react-native run-android
+    ```bash
+    npm install
+    ```
+
+3. **Execute o aplicativo:**
+
+    ```bash
+    npx react-native run-android # para Android
+    npx react-native run-ios     # para iOS
+    ```
+
+## Dependências
 
 Este aplicativo utiliza as seguintes bibliotecas:
 
-react: Biblioteca principal do React.
-react-native: Framework para desenvolvimento mobile.
-react-native-calendars: Componente de calendário.
-@react-navigation/native: Biblioteca para navegação.
-@react-navigation/stack: Biblioteca para navegação em pilha.
-Estrutura do Projeto
-App.js: Ponto de entrada do aplicativo.
-HomeScreen.js: Tela inicial contendo o calendário.
-FormScreen.js: Tela de formulário para adicionar compromissos.
+- `react`: Biblioteca principal do React.
+- `react-native`: Framework para desenvolvimento mobile.
+- `react-native-calendars`: Componente de calendário.
+- `@react-navigation/native`: Biblioteca para navegação.
+- `@react-navigation/stack`: Biblioteca para navegação em pilha.
+
+## Estrutura do Projeto
+
+- **App.js**: Ponto de entrada do aplicativo.
+- **HomeScreen.js**: Tela inicial contendo o calendário.
+- **FormScreen.js**: Tela de formulário para adicionar compromissos.
+
+## Contribuição
+
+Contribuições são bem-vindas! Sinta-se à vontade para abrir issues e enviar pull requests.
+
+## Licença
+
+Este projeto está licenciado sob a licença Apache-2.0. Veja o arquivo [[LICENSE](LICENSE)](https://github.com/bryanfoch/projeto-react-native-?tab=Apache-2.0-1-ov-file#readme) para mais detalhes.
