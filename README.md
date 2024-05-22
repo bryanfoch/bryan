@@ -11,22 +11,21 @@ Para instalar e executar este aplicativo, siga as instruções abaixo:
 
 Clone o repositório:
 
-bash
+bash:
 Copy code
-git clone https://github.com/seu-usuario/seu-repositorio.git
+git clone https://github.com/bryanfoch/projeto-react-native-
 cd seu-repositorio
-Instale as dependências:
 
+Instale as dependências:
 bash
 Copy code
 npm install
-Execute o aplicativo:
 
+Execute o aplicativo:
 bash
 Copy code
-npx react-native run-android # para Android
-npx react-native run-ios     # para iOS
-Dependências
+npx react-native run-android
+
 Este aplicativo utiliza as seguintes bibliotecas:
 
 react: Biblioteca principal do React.
