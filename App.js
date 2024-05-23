@@ -8,13 +8,15 @@ const Stack = createStackNavigator();
 
 function FormScreen({ route, navigation }) {
     const { selectedDate } = route.params;
+    const [client, setClient] = useState('');
     const [time, setTime] = useState('');
-    const [appointment, setAppointment] = useState('');
+    const [serviceType, setServiceType] = useState('');
 
     const onSaveAppointment = () => {
         console.log('Data selecionada:', selectedDate);
+        console.log('Cliente:', client);
         console.log('Horário:', time);
-        console.log('Compromisso:', appointment);
+        console.log('Tipo de Serviço:', serviceType);
         // Implementar lógica de salvar compromisso aqui
         navigation.goBack();
     };
@@ -23,7 +25,13 @@ function FormScreen({ route, navigation }) {
         <View style={styles.container}>
             <StatusBar backgroundColor="red" />
             <View style={styles.formContainer}>
-                <Text>Data selecionada: {selectedDate}</Text>
+                <Text style={styles.label}>Data selecionada: {selectedDate}</Text>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Cliente"
+                    value={client}
+                    onChangeText={(text) => setClient(text)}
+                />
                 <TextInput
                     style={styles.input}
                     placeholder="Horário"
@@ -32,9 +40,9 @@ function FormScreen({ route, navigation }) {
                 />
                 <TextInput
                     style={styles.input}
-                    placeholder="Serviço"
-                    value={appointment}
-                    onChangeText={(text) => setAppointment(text)}
+                    placeholder="Tipo De Serviço"
+                    value={serviceType}
+                    onChangeText={(text) => setServiceType(text)}
                 />
                 <Button title="Salvar Compromisso" onPress={onSaveAppointment} />
             </View>
@@ -86,7 +94,7 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingTop: 20,
         paddingHorizontal: 10,
-        backgroundColor: 'rgb(23 36 34)', //cor de fundo total
+        backgroundColor: 'rgb(23, 36, 34)', //cor de fundo total
     },
     calendarContainer: {
         flex: 1,
@@ -95,17 +103,22 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         paddingHorizontal: 20,
-        backgroundColor: 'rgb(11 39 71)',
-        borderRadius:87,
+        backgroundColor: 'rgb(11, 39, 71)',
+        borderRadius: 10,
+        padding: 20,
+    },
+    label: {
+        color: 'white',
+        marginBottom: 10,
     },
     input: {
         height: 40,
         borderColor: 'white',
-        borderRadius: 38,
+        borderRadius: 10,
         borderWidth: 1,
         paddingHorizontal: 8,
         marginBottom: 12,
-        padding: 1,
+        color: 'white',
     },
 });
 
