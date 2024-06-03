@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Button, StatusBar, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as SQLite from 'expo-sqlite';
+
+// Configuração da localização para português
+LocaleConfig.locales['pt'] = {
+  monthNames: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
+  monthNamesShort: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+  dayNames: ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'],
+  dayNamesShort: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],
+  today: 'Hoje'
+};
+LocaleConfig.defaultLocale = 'pt';
 
 const db = SQLite.openDatabase('compromissos.db');
 const Stack = createStackNavigator();
@@ -162,7 +172,7 @@ function HomeScreen({ navigation }) {
   };
 
   const onViewMarkedDays = () => {
-    navigation.navigate('MarkedDays', { markedDates });
+    navigation.navigate('MarkedDays', { markedDates, refreshData });
   };
 
   return (
@@ -180,7 +190,6 @@ function HomeScreen({ navigation }) {
             textDayFontSize: 16,
             textMonthFontSize: 20,
             textDayHeaderFontSize: 14,
-            
           }}
           markedDates={markedDates}
           firstDay={0}
@@ -194,10 +203,10 @@ function HomeScreen({ navigation }) {
 }
 
 function MarkedDaysScreen({ route, navigation }) {
-  const { markedDates } = route.params;
+  const { markedDates, refreshData } = route.params;
 
   const onDayPress = date => {
-    navigation.navigate('AppointmentDetails', { date, details: markedDates[date] });
+    navigation.navigate('AppointmentDetails', { date, details: markedDates[date], refreshData });
   };
 
   return (
@@ -219,14 +228,17 @@ function MarkedDaysScreen({ route, navigation }) {
 }
 
 function AppointmentDetailsScreen({ route, navigation }) {
-  const { date, details } = route.params;
+  const { date, details, refreshData } = route.params;
 
   const handleDelete = () => {
     deletarCompromisso(details.id, () => {
       Alert.alert(
         'Sucesso',
         'Compromisso deletado com sucesso!',
-        [{ text: 'OK', onPress: () => navigation.goBack() }],
+        [{ text: 'OK', onPress: () => {
+          refreshData();
+          navigation.goBack();
+        } }],
         { cancelable: false }
       );
     });
@@ -236,7 +248,8 @@ function AppointmentDetailsScreen({ route, navigation }) {
     navigation.navigate('Form', { 
       selectedDate: date, 
       compromisso: details, 
-      isEdit: true 
+      isEdit: true,
+      refreshData
     });
   };
 
@@ -249,7 +262,7 @@ function AppointmentDetailsScreen({ route, navigation }) {
         <Text style={styles.detailsText}>Horário: {details.horario}</Text>
         <Text style={styles.detailsText}>Tipo de Serviço: {details.tipoServico}</Text>
         <Button title="Editar" onPress={handleEdit} />
-        <Button title="Deletar" onPress={handleDelete} />
+        <Button title="Deletar" onPress={handleDelete} color="red" />
       </View>
     </View>
   );
@@ -276,34 +289,39 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgb(23, 36, 34)', //cor de fundo total
   },
   instructions: {
-    fontSize: 18,
+    color: 'white',
+    fontSize: 16,
     textAlign: 'center',
-    color: '#000000',
-    marginBottom: 20,
+    marginVertical: 10,
   },
   calendarContainer: {
     flex: 1,
-    justifyContent: 'center',
+    marginVertical: 20, // Adicionado espaçamento ao redor do calendário
   },
   formContainer: {
     flex: 1,
     justifyContent: 'center',
+    paddingHorizontal: 20,
+    backgroundColor: 'rgb(11, 39, 71)',
+    borderRadius: 10,
+    padding: 20,
   },
   label: {
-    fontSize: 18,
+    color: 'white',
     marginBottom: 10,
-    color: '#ffffff', //cor do texto
   },
   input: {
     height: 40,
-    borderColor: '#ffffff', //cor da borda
+    borderColor: 'white',
+    borderRadius: 10,
     borderWidth: 1,
-    marginBottom: 20,
-    paddingHorizontal: 10,
-    color: '#ffffff', //cor do texto
+    paddingHorizontal: 8,
+    marginBottom: 12,
+    color: 'white',
   },
-  buttonContainer: {
+  buttonContainer: {   //botão de ver dias marcados
     marginTop: 20,
+    marginHorizontal: 20,
   },
   markedDaysContainer: {
     flex: 1,
@@ -311,19 +329,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   markedDayText: {
-    fontSize: 18,
-    marginBottom: 10,
-    color: '#ffffff', //cor do texto
+    color: 'white',
+    fontSize: 16,
+    marginVertical: 5,
   },
   detailsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'rgb(11, 39, 71)',
+    borderRadius: 10,
   },
   detailsText: {
-    fontSize: 18,
+    color: 'white',
+    fontSize: 16,
     marginBottom: 10,
-    color: '#ffffff', //cor do texto
   },
 });
 
