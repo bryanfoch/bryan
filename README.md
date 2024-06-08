@@ -56,3 +56,8 @@ Contribuições são bem-vindas! Sinta-se à vontade para abrir issues e enviar 
 ## Licença
 
 Este projeto está licenciado sob a licença Apache-2.0. Veja o arquivo [[LICENSE](LICENSE)](https://github.com/bryanfoch/projeto-react-native-?tab=Apache-2.0-1-ov-file#readme) para mais detalhes.
+
+
+div align="center"
+img src="![WhatsApp Image 2024-06-08 at 18 26 39 (3)](https://github.com/bryanfoch/projeto-react-native-/assets/129864145/add57292-c111-43a8-95f3-9be105eb1ee2)" width="0px" /
+/div
