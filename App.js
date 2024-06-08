@@ -23,6 +23,9 @@ function initializeDatabase() {
     tx.executeSql(
       'CREATE TABLE IF NOT EXISTS compromissos (id INTEGER PRIMARY KEY AUTOINCREMENT, data TEXT, cliente TEXT, horario TEXT, tipo_servico TEXT);'
     );
+    tx.executeSql(
+      'CREATE TABLE IF NOT EXISTS usuarios (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT, senha TEXT);'
+    );
   });
 }
 
@@ -86,6 +89,88 @@ function atualizarCompromisso(id, data, cliente, horario, tipoServico, callback)
   });
 }
 
+function criarUsuario(nome, senha, callback) {
+  db.transaction(tx => {
+    tx.executeSql(
+      'INSERT INTO usuarios (nome, senha) VALUES (?, ?);',
+      [nome, senha],
+      (_, result) => {
+        callback(result);
+      },
+      (_, error) => {
+        console.error(error);
+      }
+    );
+  });
+}
+
+function verificarUsuario(nome, senha, callback) {
+  db.transaction(tx => {
+    tx.executeSql(
+      'SELECT * FROM usuarios WHERE nome = ? AND senha = ?;',
+      [nome, senha],
+      (_, { rows: { _array } }) => {
+        callback(_array.length > 0);
+      },
+      (_, error) => {
+        console.error(error);
+      }
+    );
+  });
+}
+
+function LoginScreen({ navigation }) {
+  const [nome, setNome] = useState('');
+  const [senha, setSenha] = useState('');
+
+  const handleLogin = () => {
+    if (!nome || !senha) {
+      Alert.alert('Erro', 'Por favor, insira o nome e a senha ou faça um novo registro para continuar.');
+      return;
+    }
+    verificarUsuario(nome, senha, isValid => {
+      if (isValid) {
+        navigation.navigate('Home');
+      } else {
+        Alert.alert('Erro', 'Nome de usuário ou senha incorretos.');
+      }
+    });
+  };
+
+  const handleRegister = () => {
+    criarUsuario(nome, senha, () => {
+      Alert.alert('Sucesso', 'Usuário registrado com sucesso!');
+    });
+  };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar backgroundColor="red" />
+      <View style={styles.formContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Nome"
+          value={nome}
+          onChangeText={setNome}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Senha"
+          secureTextEntry
+          value={senha}
+          onChangeText={setSenha}
+        />
+        <View style={styles.buttonContainer}>
+          <Button title="Login" onPress={handleLogin} />
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button title="Registrar" onPress={handleRegister} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function FormScreen({ route, navigation }) {
   const { selectedDate, refreshData, compromisso, isEdit } = route.params;
   const [cliente, setCliente] = useState(compromisso?.cliente || '');
@@ -143,7 +228,9 @@ function FormScreen({ route, navigation }) {
           value={tipoServico}
           onChangeText={setTipoServico}
         />
-        <Button title={isEdit ? "Atualizar Compromisso" : "Salvar Compromisso"} onPress={onSaveAppointment} />
+        <View style={styles.buttonContainer}>
+          <Button title={isEdit ? "Atualizar Compromisso" : "Salvar Compromisso"} onPress={onSaveAppointment} />
+        </View>
       </View>
     </View>
   );
@@ -151,6 +238,7 @@ function FormScreen({ route, navigation }) {
 
 function HomeScreen({ navigation }) {
   const [markedDates, setMarkedDates] = useState({});
+  const [brasiliaTime, setBrasiliaTime] = useState('');
 
   const refreshData = () => {
     recuperarCompromissos(compromissos => {
@@ -167,37 +255,42 @@ function HomeScreen({ navigation }) {
     refreshData();
   }, []);
 
-  const onDayPress = day => {
-    navigation.navigate('Form', { selectedDate: day.dateString, refreshData });
+  useEffect(() => {
+    const updateBrasiliaTime = () => {
+      const now = new Date();
+      const options = { timeZone: 'America/Sao_Paulo', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+      const timeString = now.toLocaleTimeString('pt-BR', options);
+      setBrasiliaTime(timeString);
+    };
+
+    updateBrasiliaTime(); // Update immediately
+    const intervalId = setInterval(updateBrasiliaTime, 1000); // Update every second
+
+    return () => clearInterval(intervalId); // Cleanup interval on unmount
+  }, []);
+
+  const handleDayPress = day => {
+    const selectedDate = day.dateString;
+    navigation.navigate('FormScreen', { selectedDate, refreshData });
   };
 
-  const onViewMarkedDays = () => {
-    navigation.navigate('MarkedDays', { markedDates, refreshData });
+  const handleMarkedDaysPress = () => {
+    navigation.navigate('MarkedDaysScreen', { markedDates, refreshData });
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor="rgb(73, 89, 94)" />
-      <Text style={styles.instructions}>Clique em um dia no calendário para adicionar um compromisso</Text>
-      <View style={styles.calendarContainer}>
-        <Calendar
-          onDayPress={onDayPress}
-          theme={{
-            calendarBackground: 'rgb(73, 89, 94)', // Cor de fundo do calendário
-            dayTextColor: '#000000', // Cor do texto dos dias
-            monthTextColor: '#000000', // Cor do texto dos meses
-            arrowColor: '#000000', // Cor das setas de navegação
-            textDayFontSize: 16,
-            textMonthFontSize: 20,
-            textDayHeaderFontSize: 14,
-          }}
-          markedDates={markedDates}
-          firstDay={0}
-        />
-        <View style={styles.buttonContainer}>
-          <Button title="Ver Dias Marcados" onPress={onViewMarkedDays} />
-        </View>
-      </View>
+      <StatusBar backgroundColor="red" />
+      <Text style={styles.instructionText}>Clique e escolha um dia do calendário para adicionar um compromisso.</Text>
+      <Calendar
+        onDayPress={handleDayPress}
+        markedDates={markedDates}
+        markingType={'simple'}
+      />
+      <TouchableOpacity style={styles.markedDaysButton} onPress={handleMarkedDaysPress}>
+        <Text style={styles.markedDaysButtonText}>Compromissos Marcados</Text>
+      </TouchableOpacity>
+      <Text style={styles.brasiliaTime}>{brasiliaTime}</Text>
     </View>
   );
 }
@@ -206,21 +299,23 @@ function MarkedDaysScreen({ route, navigation }) {
   const { markedDates, refreshData } = route.params;
 
   const onDayPress = date => {
-    navigation.navigate('AppointmentDetails', { date, details: markedDates[date], refreshData });
+    const compromisso = markedDates[date];
+    if (compromisso) {
+      navigation.navigate('AppointmentDetails', { date, details: compromisso, refreshData });
+    }
   };
 
   return (
     <ScrollView style={styles.container}>
-      <StatusBar backgroundColor="rgb(73, 89, 94)" />
       <View style={styles.markedDaysContainer}>
-        {Object.keys(markedDates).length > 0 ? (
+        {Object.keys(markedDates).length ? (
           Object.keys(markedDates).map(date => (
             <TouchableOpacity key={date} onPress={() => onDayPress(date)}>
               <Text style={styles.markedDayText}>{date}</Text>
             </TouchableOpacity>
           ))
         ) : (
-          <Text style={styles.markedDayText}>Nenhum dia marcado</Text>
+          <Text style={styles.markedDayText}>Nenhum compromisso marcado.</Text>
         )}
       </View>
     </ScrollView>
@@ -231,117 +326,140 @@ function AppointmentDetailsScreen({ route, navigation }) {
   const { date, details, refreshData } = route.params;
 
   const handleDelete = () => {
-    deletarCompromisso(details.id, () => {
-      Alert.alert(
-        'Sucesso',
-        'Compromisso deletado com sucesso!',
-        [{ text: 'OK', onPress: () => {
-          refreshData();
-          navigation.goBack();
-        } }],
-        { cancelable: false }
-      );
-    });
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Tem certeza de que deseja excluir este compromisso?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          onPress: () => {
+            deletarCompromisso(details.id, () => {
+              refreshData();
+              navigation.goBack();
+            });
+          },
+          style: 'destructive'
+        }
+      ],
+      { cancelable: false }
+    );
   };
 
   const handleEdit = () => {
-    navigation.navigate('Form', { 
-      selectedDate: date, 
-      compromisso: details, 
-      isEdit: true,
-      refreshData
-    });
+    navigation.navigate('FormScreen', { selectedDate: date, compromisso: details, isEdit: true, refreshData });
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor="rgb(73, 89, 94)" />
+      <StatusBar backgroundColor="red" />
       <View style={styles.detailsContainer}>
         <Text style={styles.detailsText}>Data: {date}</Text>
         <Text style={styles.detailsText}>Cliente: {details.cliente}</Text>
         <Text style={styles.detailsText}>Horário: {details.horario}</Text>
         <Text style={styles.detailsText}>Tipo de Serviço: {details.tipoServico}</Text>
-        <Button title="Editar" onPress={handleEdit} />
-        <Button title="Deletar" onPress={handleDelete} color="red" />
+        <View style={styles.buttonContainer}>
+          <Button title="Editar" onPress={handleEdit} />
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button title="Excluir" onPress={handleDelete} />
+        </View>
       </View>
     </View>
   );
 }
 
-const App = () => {
+function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Calendário' }} />
-        <Stack.Screen name="Form" component={FormScreen} options={{ title: 'Adicionar Compromisso' }} />
-        <Stack.Screen name="MarkedDays" component={MarkedDaysScreen} options={{ title: 'Dias Marcados' }} />
+      <Stack.Navigator initialRouteName="Login">
+        <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Login' }} />
+        <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Agenda' }} />
+        <Stack.Screen name="FormScreen" component={FormScreen} options={{ title: 'Novo Compromisso' }} />
+        <Stack.Screen name="MarkedDaysScreen" component={MarkedDaysScreen} options={{ title: 'Compromissos Marcados' }} />
         <Stack.Screen name="AppointmentDetails" component={AppointmentDetailsScreen} options={{ title: 'Detalhes do Compromisso' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
-};
+}
 
 const styles = StyleSheet.create({
+  //compromissos marcados
   container: {
     flex: 1,
-    paddingTop: 20,
-    paddingHorizontal: 10,
-    backgroundColor: 'rgb(23, 36, 34)', //cor de fundo total
+    padding: 16,
+    backgroundColor: '#fff',
   },
-  instructions: {
-    color: 'white',
-    fontSize: 16,
-    textAlign: 'center',
-    marginVertical: 10,
-  },
-  calendarContainer: {
-    flex: 1,
-    marginVertical: 20, // Adicionado espaçamento ao redor do calendário
-  },
+
+  //
   formContainer: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    backgroundColor: 'rgb(11, 39, 71)',
-    borderRadius: 10,
-    padding: 20,
   },
   label: {
-    color: 'white',
-    marginBottom: 10,
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 8,
   },
-  input: {
+   //tela login
+   input: {
     height: 40,
-    borderColor: 'white',
-    borderRadius: 10,
+    borderColor: '#ccc',
     borderWidth: 1,
-    paddingHorizontal: 8,
     marginBottom: 12,
-    color: 'white',
+    paddingHorizontal: 8,
+
   },
-  buttonContainer: {   //botão de ver dias marcados
+  //
+  buttonContainer: {
+    marginVertical: 5, // Adiciona espaçamento vertical entre os botões
+  },
+   //botão ver compromissos marcados
+   markedDaysButton: {
+    backgroundColor: '#4682b4',
+    padding: 10,
     marginTop: 20,
-    marginHorizontal: 20,
-  },
-  markedDaysContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    borderRadius: 5,
     alignItems: 'center',
   },
-  markedDayText: {
-    color: 'white',
+  markedDaysButtonText: {
+    color: '#fff',
     fontSize: 16,
-    marginVertical: 5,
+  },
+  //
+   //compromissos marcados
+   markedDaysContainer: {
+    marginTop: 20,
+  },
+  //
+  markedDayText: {
+    fontSize: 18,
+    color: '#333',
+    marginBottom: 10,
   },
   detailsContainer: {
-    padding: 20,
-    backgroundColor: 'rgb(11, 39, 71)',
-    borderRadius: 10,
+    flex: 1,
+    justifyContent: 'center',
   },
+  //detalhes do compromisso
   detailsText: {
-    color: 'white',
-    fontSize: 16,
+    fontSize: 18,
+    color: '#333',
     marginBottom: 10,
+  },
+  //
+  brasiliaTime: {
+    marginTop: 245,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffc160',
+    textAlign: 'center',
+  },
+  instructionText: {
+    fontSize: 16,
+    color: '#8c95c2',
+    marginBottom: 16,
+    textAlign: 'center',
   },
 });
 
