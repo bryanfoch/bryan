@@ -29,6 +29,8 @@ Para instalar e executar este aplicativo, siga as instruções abaixo:
 
     ```bash
     npx react-native run-android # para Android
+    ou
+    npm start
     ```
 
 ## Dependências
