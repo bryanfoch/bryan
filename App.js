@@ -4,6 +4,7 @@ import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as SQLite from 'expo-sqlite';
+import 'react-native-gesture-handler';
 
 // Configuração da localização para português
 LocaleConfig.locales['pt'] = {
@@ -21,10 +22,24 @@ const Stack = createStackNavigator();
 function initializeDatabase() {
   db.transaction(tx => {
     tx.executeSql(
-      'CREATE TABLE IF NOT EXISTS compromissos (id INTEGER PRIMARY KEY AUTOINCREMENT, data TEXT, cliente TEXT, horario TEXT, tipo_servico TEXT);'
+      'CREATE TABLE IF NOT EXISTS compromissos (id INTEGER PRIMARY KEY AUTOINCREMENT, data TEXT, cliente TEXT, horario TEXT, tipo_servico TEXT);',
+      [],
+      () => {
+        console.log('Tabela compromissos criada com sucesso');
+      },
+      (_, error) => {
+        console.error('Erro ao criar tabela compromissos', error);
+      }
     );
     tx.executeSql(
-      'CREATE TABLE IF NOT EXISTS usuarios (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT, senha TEXT);'
+      'CREATE TABLE IF NOT EXISTS usuarios (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT, senha TEXT);',
+      [],
+      () => {
+        console.log('Tabela usuarios criada com sucesso');
+      },
+      (_, error) => {
+        console.error('Erro ao criar tabela usuarios', error);
+      }
     );
   });
 }
@@ -242,11 +257,11 @@ function HomeScreen({ navigation }) {
 
   const refreshData = () => {
     recuperarCompromissos(compromissos => {
-      const newMarkedDates = compromissos.reduce((acc, { id, data, cliente, horario, tipo_servico }) => {
-        acc[data] = { marked: true, id, cliente, horario, tipoServico: tipo_servico };
-        return acc;
-      }, {});
-      setMarkedDates(newMarkedDates);
+      const dates = {};
+      compromissos.forEach(c => {
+        dates[c.data] = { marked: true, dotColor: 'blue', ...c };
+      });
+      setMarkedDates(dates);
     });
   };
 
@@ -270,8 +285,7 @@ function HomeScreen({ navigation }) {
   }, []);
 
   const handleDayPress = day => {
-    const selectedDate = day.dateString;
-    navigation.navigate('FormScreen', { selectedDate, refreshData });
+    navigation.navigate('FormScreen', { selectedDate: day.dateString, refreshData });
   };
 
   const handleMarkedDaysPress = () => {
@@ -281,7 +295,7 @@ function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="red" />
-      <Text style={styles.instructionText}>Clique e escolha um dia do calendário para adicionar um compromisso.</Text>
+      <Text style={styles.instructionText}>Por favor, escolha um dia do calendário para adicionar um compromisso.</Text>
       <Calendar
         onDayPress={handleDayPress}
         markedDates={markedDates}
@@ -357,7 +371,7 @@ function AppointmentDetailsScreen({ route, navigation }) {
         <Text style={styles.detailsText}>Data: {date}</Text>
         <Text style={styles.detailsText}>Cliente: {details.cliente}</Text>
         <Text style={styles.detailsText}>Horário: {details.horario}</Text>
-        <Text style={styles.detailsText}>Tipo de Serviço: {details.tipoServico}</Text>
+        <Text style={styles.detailsText}>Tipo de Serviço: {details.tipo_servico}</Text>
         <View style={styles.buttonContainer}>
           <Button title="Editar" onPress={handleEdit} />
         </View>
@@ -370,6 +384,10 @@ function AppointmentDetailsScreen({ route, navigation }) {
 }
 
 function App() {
+  useEffect(() => {
+    initializeDatabase();
+  }, []);
+
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
@@ -384,14 +402,11 @@ function App() {
 }
 
 const styles = StyleSheet.create({
-  //compromissos marcados
   container: {
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
   },
-
-  //
   formContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -401,21 +416,17 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 8,
   },
-   //tela login
-   input: {
+  input: {
     height: 40,
     borderColor: '#ccc',
     borderWidth: 1,
     marginBottom: 12,
     paddingHorizontal: 8,
-
   },
-  //
   buttonContainer: {
     marginVertical: 5, // Adiciona espaçamento vertical entre os botões
   },
-   //botão ver compromissos marcados
-   markedDaysButton: {
+  markedDaysButton: {
     backgroundColor: '#4682b4',
     padding: 10,
     marginTop: 20,
@@ -426,12 +437,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
-  //
-   //compromissos marcados
-   markedDaysContainer: {
+  markedDaysContainer: {
     marginTop: 20,
   },
-  //
   markedDayText: {
     fontSize: 18,
     color: '#333',
@@ -441,13 +449,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  //detalhes do compromisso
   detailsText: {
     fontSize: 18,
     color: '#333',
     marginBottom: 10,
   },
-  //
   brasiliaTime: {
     marginTop: 245,
     fontSize: 18,
