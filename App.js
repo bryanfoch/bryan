@@ -278,10 +278,10 @@ function HomeScreen({ navigation }) {
       setBrasiliaTime(timeString);
     };
 
-    updateBrasiliaTime(); // Update immediately
-    const intervalId = setInterval(updateBrasiliaTime, 1000); // Update every second
+    updateBrasiliaTime(); 
+    const intervalId = setInterval(updateBrasiliaTime, 1000); 
 
-    return () => clearInterval(intervalId); // Cleanup interval on unmount
+    return () => clearInterval(intervalId); 
   }, []);
 
   const handleDayPress = day => {
